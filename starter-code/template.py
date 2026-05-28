@@ -27,10 +27,19 @@ import anthropic
 from dotenv import load_dotenv
 load_dotenv()
 
-# Initialize clients
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# Initialize clients (lazy-loaded to avoid errors during testing)
+client = None
+gemini_client = None
+anthropic_client = None
+
+def _init_clients():
+    global client, gemini_client, anthropic_client
+    if client is None:
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    if gemini_client is None:
+        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    if anthropic_client is None:
+        anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 # ---------------------------------------------------------------------------
 # Estimated costs per 1M INPUT & OUTPUT tokens (USD) as of March 2026
@@ -77,6 +86,8 @@ def call_openai(
     """
 
     start_time = time.time()
+    
+    _init_clients()
 
     response = client.chat.completions.create(
         model=model,
@@ -114,6 +125,9 @@ def call_gemini(
     top_p: float = 0.9,
     max_tokens: int = 256,
 ) -> tuple[str, float, dict]:
+    # Initialize clients if needed
+    _init_clients()
+    
     # Create config with parameters
     config = types.GenerateContentConfig(
         temperature=temperature,
@@ -174,6 +188,9 @@ def call_anthropic(
         client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         # response.usage contains input_tokens and output_tokens
     """
+    # Initialize clients if needed
+    _init_clients()
+    
     # Measure latency
     start_time = time.time()
     message = anthropic_client.messages.create(
@@ -275,6 +292,9 @@ def streaming_chatbot() -> None:
         - Check how to stream responses using client.chats or model.generate_content(..., stream=True).
         - Keep history limited to the last 3 turns to optimize context window and costs.
     """
+    # Initialize clients if needed
+    _init_clients()
+    
     history = []
     
     print("\n=== Gemini 2.5 Streaming Chatbot ===")
