@@ -13,14 +13,10 @@ import os
 import time
 from typing import Any, Callable
 
-# Import OpenAI client
-from openai import OpenAI
-
-# Import Google Gemini client
+# Import client modules (not the classes directly, so mocking works)
+import openai
 from google import genai
 from google.genai import types
-
-# Import Anthropic client
 import anthropic
 
 # Load environment variables from .env file if present
@@ -35,7 +31,7 @@ anthropic_client = None
 def _init_clients():
     global client, gemini_client, anthropic_client
     if client is None:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     if gemini_client is None:
         gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     if anthropic_client is None:
